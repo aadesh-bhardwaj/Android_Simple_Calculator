@@ -1,4 +1,4 @@
-package me.mahakagg.calculator;
+package com.aadesh.calculator;
 
 import android.content.Context;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -21,7 +21,7 @@ public class ExampleInstrumentedTest {
         // Context of the app under test.
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
 
-        assertEquals("me.mahakagg.calculator", appContext.getPackageName());
+        assertEquals("com.aadesh.calculator", appContext.getPackageName());
     }
 }
 

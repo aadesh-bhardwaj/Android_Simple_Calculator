@@ -1,4 +1,4 @@
-package me.mahakagg.calculator;
+package com.aadesh.calculator;
 
 import android.os.Bundle;
 import android.view.View;
