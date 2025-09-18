@@ -76,7 +76,7 @@ pipeline:
                     connectorRef: GCS_Connector
                     bucket: atmosly-tfstate-atmosly-439606
                     sourcePath: Calculator/app/build/outputs/apk/debug/*.apk
-                    target: harness/test
+                    target: harness/test/<+pipeline.sequenceId>
           caching:
             enabled: true
             paths:
