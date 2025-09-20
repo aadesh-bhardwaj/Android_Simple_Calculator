@@ -115,7 +115,96 @@ This document explains your Android Continuous Integration setup in **Harness**,
 <summary><strong>Click to expand</strong></summary>
 
 ```yaml
-# YAML content truncated for brevity. The actual file will contain the full YAML as provided earlier.
+pipeline:
+  identifier: SimpleCalc
+  name: SimpleCalc
+  projectIdentifier: default_project
+  orgIdentifier: default
+  properties:
+    ci:
+      codebase:
+        connectorRef: SimpleCalc
+        build:
+          type: branch
+          spec:
+            branch: <+trigger.branch>
+        sparseCheckout: []
+  stages:
+    - stage:
+        identifier: Build_Android
+        type: CI
+        name: Build_Android
+        spec:
+          cloneCodebase: true
+          infrastructure:
+            type: KubernetesDirect
+            spec:
+              connectorRef: test101
+              namespace: imported
+              automountServiceAccountToken: true
+              nodeSelector: {}
+              os: Linux
+          execution:
+            steps:
+              - step:
+                  identifier: Build_APK
+                  type: Run
+                  name: Build APK
+                  spec:
+                    connectorRef: stupido_saurus
+                    image: stupidosaurus/android-sdk-gradle:latest
+                    shell: Sh
+                    command: |-
+                      set -eux
+                      echo ">>> Building and Testing Android App..."
+                      cd Calculator
+                      chmod +x gradlew
+                      ./gradlew --version
+                      ./gradlew clean assembleDebug
+                      ls -al app/build/outputs/apk/debug/
+                    resources:
+                      limits:
+                        memory: 4Gi
+                        cpu: "2"
+              - step:
+                  identifier: JUnit_Reports
+                  type: RunTests
+                  name: Run Unit Tests
+                  spec:
+                    connectorRef: stupido_saurus
+                    image: stupidosaurus/android-sdk-gradle:latest
+                    language: Java
+                    buildTool: Gradle
+                    args: testDebugUnitTest
+                    runOnlySelectedTests: false
+                    preCommand: cd Calculator
+                    resources:
+                      limits:
+                        memory: 4Gi
+                        cpu: "2"
+                    reports:
+                      type: JUnit
+                      spec:
+                        paths:
+                          - Calculator/app/build/test-results/testDebugUnitTest/*.xml
+                    enableTestSplitting: false
+              - step:
+                  identifier: GCSUpload_1
+                  type: GCSUpload
+                  name: GCSUpload_1
+                  spec:
+                    connectorRef: GCS_Connector
+                    bucket: atmosly-tfstate-atmosly-439606
+                    sourcePath: Calculator/app/build/outputs/apk/debug/*.apk
+                    target: harness/test/<+pipeline.sequenceId>
+          caching:
+            enabled: true
+            paths:
+              - /harness/gradle/caches
+              - /harness/gradle/wrapper
+          buildIntelligence:
+            enabled: true
+        description: ""
 ```
 </details>
 
@@ -123,7 +212,111 @@ This document explains your Android Continuous Integration setup in **Harness**,
 
 ## 🔍 YAML Explanation (Line-by-Line)
 
-(See earlier explanation in full content)
+pipeline (top level)
+
+name / identifier: Human-readable vs unique ID for the pipeline.
+
+projectIdentifier / orgIdentifier: Which Project/Org in Harness holds this pipeline.
+
+properties.ci.codebase
+
+connectorRef: SimpleCalc: Code repository connector. Harness clones the repo through this connector.
+
+build: <+input>: A runtime input; when you press Run, you choose branch/PR/commit.
+
+sparseCheckout: []: Not using sparse checkout (full clone).
+
+stages[0] — Build_Android (CI stage)
+
+type: CI: This is a CI stage (not CD).
+
+spec.cloneCodebase: true: Harness will automatically clone the repository at stage start.
+
+infrastructure
+
+type: KubernetesDirect: The stage runs each step as a Kubernetes pod on a cluster.
+
+spec.connectorRef: test101: Kubernetes connector pointing to your cluster with a delegate installed.
+
+namespace: imported: Pods run in this namespace.
+
+automountServiceAccountToken: true: Mounts default service account token in step pods (often fine for build pods).
+
+nodeSelector: {}: No specific node selection.
+
+os: Linux: Container OS for steps.
+
+execution.steps[0] — Build APK (Run)
+
+type: Run: A general container step.
+
+connectorRef: stupido_saurus: Docker registry connector for pulling the image (omit if image public).
+
+image: stupidosaurus/android-sdk-gradle:latest: Your custom image with JDK/Gradle/Android SDK preinstalled.
+
+shell: Sh: Shell for the command.
+
+command:
+
+cd Calculator: Enter the project subfolder.
+
+chmod +x gradlew: Ensure wrapper is executable.
+
+./gradlew --version: Debug info in logs.
+
+./gradlew clean assembleDebug: Build a Debug APK.
+
+ls -al app/build/outputs/apk/debug/: Confirm artifact exists.
+
+resources.limits: Caps pod container resources (prevents OOM / oversubscription).
+
+execution.steps[1] — Run Unit Tests (RunTests)
+
+type: RunTests: Structured test step that surfaces results in the Tests tab.
+
+connectorRef / image: Same container image as build step (consistent toolchain).
+
+language: Java / buildTool: Gradle: Enables CI insights for Java/Gradle tests.
+
+args: testDebugUnitTest: Runs unit tests for the debug variant (Android convention).
+
+runOnlySelectedTests: false: Ensures all tests run (no test selection/impact analysis).
+
+preCommand: cd Calculator: Enter project directory before running Gradle.
+
+reports.type: JUnit with paths: Where Gradle emits JUnit XML (app/build/test-results/testDebugUnitTest/*.xml). Harness parses this into the Tests UI.
+
+resources.limits: Memory/CPU for the test container.
+
+enableTestSplitting: false: Disables splitting across multiple containers.
+
+execution.steps[2] — Upload APK (GCSUpload)
+
+type: GCSUpload: Built-in step to push files to GCS.
+
+connectorRef: GCS_Connector: GCP connector with write permission to the bucket.
+
+bucket: atmosly-tfstate-atmosly-439606: Target bucket.
+
+sourcePath: Calculator/app/build/outputs/apk/debug/*.apk: Local path (inside the build container’s workspace).
+
+target: harness/test/<+pipeline.sequenceId>: Destination prefix; each run gets a unique folder using the pipeline’s sequence ID.
+
+Stage-level caching
+
+enabled: true: Turns on Harness cache for this stage.
+
+paths: Directories to persist between runs. You chose:
+
+/harness/gradle/caches
+
+/harness/gradle/wrapper
+
+Tip: To fully leverage these, set GRADLE_USER_HOME=/harness/gradle in the Build and RunTests steps (spec.envVariables) so Gradle writes to the cached location.
+
+Stage-level buildIntelligence
+
+enabled: true: Harness will collect insights (e.g., timing, flaky tests visibility).
 
 ---
 
