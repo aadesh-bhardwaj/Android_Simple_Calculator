@@ -34,6 +34,8 @@ pipeline:
                     connectorRef: stupido_saurus
                     image: stupidosaurus/android-sdk-gradle:latest
                     shell: Sh
+                    envVariables:
+                      GRADLE_USER_HOME: /harness/gradle
                     command: |-
                       set -eux
                       echo ">>> Building and Testing Android App..."
