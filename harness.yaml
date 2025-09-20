@@ -53,13 +53,13 @@ pipeline:
                     command: |-
                       set -eux
                       # Auth for Firebase via ADC (Application Default Credentials)
-                      echo '<+secrets.getValue("project.firebase_service_account")>' > /tmp/firebase.json
+                      echo '<+secrets.getValue("FirebaseKey")>' > /tmp/firebase.json
                       export GOOGLE_APPLICATION_CREDENTIALS=/tmp/firebase.json
 
                       # Install CLI and distribute the downloaded APK
                       npm i -g firebase-tools
                       # Choose either groups or testers based on which secret you created
-                      GROUPS='<+secrets.getValue("project.firebase_groups")>'
+                      GROUPS='<+secrets.getValue("firebase_groups")>'
                       if [ -n "$GROUPS" ] && [ "$GROUPS" != "<+secrets.getValue(\"firebase_groups\")>" ]; then
                         firebase appdistribution:distribute ./app-debug.apk \
                           --app <+secrets.getValue("firebase_app_id")> \
