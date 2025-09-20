@@ -102,6 +102,7 @@ pipeline:
                   name: Download APK from GCS
                   identifier: Download_APK
                   spec:
+                    connectorRef: stupido_saurus
                     image: google/cloud-sdk:slim
                     shell: Sh
                     command: |-
@@ -125,6 +126,7 @@ pipeline:
                   name: Distribute to Firebase
                   identifier: Firebase_Distribute
                   spec:
+                    connectorRef: stupido_saurus
                     image: node:18-alpine
                     shell: Sh
                     command: |-
