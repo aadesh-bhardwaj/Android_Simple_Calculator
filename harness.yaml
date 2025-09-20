@@ -85,3 +85,60 @@ pipeline:
           buildIntelligence:
             enabled: true
         description: ""
+    - stage:
+        name: Distribute_Android
+        identifier: Distribute_Android
+        type: CI
+        spec:
+          cloneCodebase: false
+          infrastructure:
+            useFromStage: Build_Android
+          execution:
+            steps:
+              - step:
+                  type: Run
+                  name: Download APK from GCS
+                  identifier: Download_APK
+                  spec:
+                    image: google/cloud-sdk:slim
+                    shell: Sh
+                    command: |-
+                      set -eux
+                      # Write SA JSON to disk
+                      echo '<+secrets.getValue("gcp_sa")>' > /tmp/gcp.json
+                      gcloud auth activate-service-account --key-file=/tmp/gcp.json
+                      # (Optional) show who we are
+                      gcloud auth list
+                      # Download the APK produced by the CI stage into current dir
+                      gsutil cp gs://atmosly-tfstate-atmosly-439606/harness/test/<+pipeline.sequenceId>/*.apk ./app-debug.apk
+                      ls -lh ./app-debug.apk
+                  failureStrategies:
+                    - onFailure:
+                        errors:
+                          - AllErrors
+                        action:
+                          type: Abort
+              - step:
+                  type: Run
+                  name: Distribute to Firebase
+                  identifier: Firebase_Distribute
+                  spec:
+                    image: node:18-alpine
+                    shell: Sh
+                    command: |-
+                      set -eux
+                      # Auth for Firebase via ADC (Application Default Credentials)
+                      echo '<+secrets.getValue("firebase_service_account")>' > /tmp/firebase.json
+                      export GOOGLE_APPLICATION_CREDENTIALS=/tmp/firebase.json
+
+                      # Install CLI and distribute the downloaded APK
+                      npm i -g firebase-tools
+                      # Choose either groups or testers based on which secret you created
+                      GROUPS='<+secrets.getValue("firebase_groups")>'
+                      if [ -n "$GROUPS" ] && [ "$GROUPS" != "<+secrets.getValue(\"firebase_groups\")>" ]; then
+                        firebase appdistribution:distribute ./app-debug.apk \
+                          --app <+secrets.getValue("firebase_app_id")> \
+                          --groups "$GROUPS" \
+                          --release-notes "CI build <+pipeline.sequenceId> from <+codebase.branch>"
+                      fi
+        description: ""
