@@ -1,4 +1,4 @@
-package me.mahakagg.calculator;
+package com.aadesh.calculator;
 
 import org.junit.Test;
 

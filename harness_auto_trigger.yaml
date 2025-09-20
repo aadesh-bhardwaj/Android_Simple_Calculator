@@ -1,0 +1,14 @@
+inputSet:
+  name: CalcInputSet
+  identifier: CalcInputSet
+  orgIdentifier: default
+  projectIdentifier: default_project
+  pipeline:
+    identifier: SimpleCalc
+    properties:
+      ci:
+        codebase:
+          build:
+            type: branch
+            spec:
+              branch: <+trigger.branch>

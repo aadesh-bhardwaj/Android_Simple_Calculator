@@ -4,7 +4,7 @@ android {
     compileSdkVersion 30
 
     defaultConfig {
-        applicationId "me.mahakagg.calculator"
+        applicationId "com.aadesh.calculator"
         minSdkVersion 19
         targetSdkVersion 30
         versionCode 1
