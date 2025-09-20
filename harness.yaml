@@ -88,9 +88,9 @@ pipeline:
             enabled: true
         description: ""
     - stage:
-        name: Distribute_Android
         identifier: Distribute_Android
         type: CI
+        name: Distribute_Android
         spec:
           cloneCodebase: false
           infrastructure:
@@ -98,9 +98,9 @@ pipeline:
           execution:
             steps:
               - step:
+                  identifier: Download_APK
                   type: Run
                   name: Download APK from GCS
-                  identifier: Download_APK
                   spec:
                     connectorRef: stupido_saurus
                     image: google/cloud-sdk:slim
@@ -108,15 +108,27 @@ pipeline:
                     envVariables:
                       GCP_SA_FILE: <+secrets.getValue("account.gcp_service_account_key")>
                     command: |-
-                      set -eux
-                      # Activate using the file path provided by Harness
+                      set -euo pipefail
+                      if [ ! -f "${GCP_SA_FILE}" ]; then
+                        echo "GCP_SA_FILE is not a file path. Ensure it's a FILE secret."; exit 1
+                      fi
+
                       gcloud auth activate-service-account --key-file="${GCP_SA_FILE}"
+                      # Optional: show active account (doesn't leak secrets)
                       gcloud auth list
-                      # Pull APK produced in the first stage (scoped by sequenceId)
-                      gsutil cp \
-                        gs://atmosly-tfstate-atmosly-439606/harness/test/<+pipeline.sequenceId>/*.apk \
-                        ./app-debug.apk
-                      ls -lh ./app-debug.apk
+
+                      # Download the APK produced in the build stage of THIS pipeline run
+                      gsutil -m cp \
+                        "gs://atmosly-tfstate-atmosly-439606/harness/test/<+pipeline.sequenceId>/*.apk" \
+                        ./
+
+                      # Pick newest APK (robust for any file name)
+                      APK="$(ls -t ./*.apk | head -1 || true)"
+                      if [ -z "${APK}" ] || [ ! -f "${APK}" ]; then
+                        echo "No APK found in download location"; exit 1
+                      fi
+                      echo "Using APK: ${APK}"
+                      ls -lh "${APK}"
                   failureStrategies:
                     - onFailure:
                         errors:
@@ -124,9 +136,9 @@ pipeline:
                         action:
                           type: Abort
               - step:
+                  identifier: Firebase_Distribute
                   type: Run
                   name: Distribute to Firebase
-                  identifier: Firebase_Distribute
                   spec:
                     connectorRef: stupido_saurus
                     image: node:18-alpine
@@ -135,13 +147,35 @@ pipeline:
                       GOOGLE_APPLICATION_CREDENTIALS: <+secrets.getValue("FirebaseKey")>
                       FIREBASE_APP_ID: <+secrets.getValue("firebase_app_id")>
                       FIREBASE_GROUPS: <+secrets.getValue("firebase_groups")>
+                      FIREBASE_TESTERS: <+secrets.getValue("firebase_testers")>
                     command: |-
-                      set -eux
+                      set -euo pipefail
+
+                      # Ensure APK from previous step exists (shared workspace/PVC)
+                      APK="$(ls -t ./*.apk | head -1 || true)"
+                      if [ -z "${APK}" ] || [ ! -f "${APK}" ]; then
+                        echo "APK not found in workspace; ensure previous step downloaded it."; exit 1
+                      fi
+
                       npm i -g firebase-tools
 
-                      if [ -n "${FIREBASE_GROUPS}" ] && [ "${FIREBASE_GROUPS}" != "<+secrets.getValue(\"firebase_groups\")>" ]; then
-                        firebase appdistribution:distribute ./app-debug.apk \
+                      # Prefer groups; fall back to testers
+                      if [ -n "${FIREBASE_GROUPS:-}" ]; then
+                        firebase appdistribution:distribute "${APK}" \
                           --app "${FIREBASE_APP_ID}" \
                           --groups "${FIREBASE_GROUPS}" \
                           --release-notes "CI build <+pipeline.sequenceId> on <+codebase.branch>"
+                      elif [ -n "${FIREBASE_TESTERS:-}" ]; then
+                        firebase appdistribution:distribute "${APK}" \
+                          --app "${FIREBASE_APP_ID}" \
+                          --testers "${FIREBASE_TESTERS}" \
+                          --release-notes "CI build <+pipeline.sequenceId> on <+codebase.branch>"
+                      else
+                        echo "Neither FIREBASE_GROUPS nor FIREBASE_TESTERS provided. Set one as a secret."; exit 1
                       fi
+                  failureStrategies:
+                    - onFailure:
+                        errors:
+                          - AllErrors
+                        action:
+                          type: Abort
