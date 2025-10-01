@@ -37,7 +37,7 @@ pipeline:
                     envVariables:
                       GRADLE_USER_HOME: /harness/gradle
                     command: |-
-                      set -eux
+                      set -ex
                       echo ">>> Building and Testing Android App..."
                       cd Calculator
                       chmod +x gradlew
