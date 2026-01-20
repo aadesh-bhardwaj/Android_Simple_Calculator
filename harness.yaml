@@ -105,12 +105,10 @@ pipeline:
                         identifier: DownloadFromGCSDeployFromFirebase
                         spec:
                           connectorRef: stupido_saurus
-                          image: node:20-alpine
+                          image: google/cloud-sdk:alpine
                           shell: Sh
                           command: |-
-                            apk add curl -y
                             npm install -g firebase-tools
-                            curl https://sdk.cloud.google.com | bash
                             gsutil cp gs://atmosly-tfstate-atmosly-439606/harness/test/23/app-debug.apk .
                             firebase appdistribution:distribute app-debug.apk --app SimpleCalc --groups "Tester"
                   stepGroupInfra:
