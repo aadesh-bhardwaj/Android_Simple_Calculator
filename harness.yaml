@@ -123,7 +123,7 @@ pipeline:
                             ls
                             pwd
                             npm install -g firebase-tools
-                            firebase appdistribution:distribute app-debug.apk --app 1:713633005791:android:5f71723c70b10baf13696a --groups "Tester"
+                            firebase appdistribution:distribute app-debug.apk --app 1:713633005791:android:5f71723c70b10baf13696a --groups "tester"
                   stepGroupInfra:
                     type: KubernetesDirect
                     spec:
