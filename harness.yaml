@@ -75,7 +75,7 @@ pipeline:
                   name: GCSUpload_1
                   identifier: GCSUpload_1
                   spec:
-                    connectorRef: PersonalGCS_Connector
+                    connectorRef: GCS_Connector
                     bucket: harness-assignment
                     sourcePath: Calculator/app/build/outputs/apk/debug/*.apk
                     target: harness/test/<+pipeline.sequenceId>
