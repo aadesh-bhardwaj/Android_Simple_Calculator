@@ -127,7 +127,7 @@ pipeline:
                   stepGroupInfra:
                     type: KubernetesDirect
                     spec:
-                      connectorRef: test102
+                      connectorRef: test101
                       namespace: harness-delegate-ng
                       serviceAccountName: vote-ksa
                       nodeSelector:
