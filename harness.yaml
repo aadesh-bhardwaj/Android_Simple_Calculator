@@ -20,7 +20,7 @@ pipeline:
             type: KubernetesDirect
             spec:
               connectorRef: test102
-              namespace: vote
+              namespace: harness-delegate-ng
               automountServiceAccountToken: true
               nodeSelector: {}
               os: Linux
@@ -128,7 +128,7 @@ pipeline:
                     type: KubernetesDirect
                     spec:
                       connectorRef: test102
-                      namespace: vote
+                      namespace: harness-delegate-ng
                       serviceAccountName: vote-ksa
                       nodeSelector:
                         cloud.google.com/gke-nodepool: wi-pool
