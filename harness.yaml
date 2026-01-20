@@ -87,3 +87,39 @@ pipeline:
           buildIntelligence:
             enabled: true
         description: ""
+    - stage:
+        name: DeployToFirebase
+        identifier: DeployToFirebase
+        description: ""
+        type: Custom
+        spec:
+          execution:
+            steps:
+              - stepGroup:
+                  name: DeployToFirebase
+                  identifier: DeployToFirebase
+                  steps:
+                    - step:
+                        type: Run
+                        name: DownloadFromGCS-DeployFromFirebase
+                        identifier: DownloadFromGCSDeployFromFirebase
+                        spec:
+                          connectorRef: stupido_saurus
+                          image: node:20-alpine
+                          shell: Sh
+                          command: |-
+                            npm install -g firebase-tools
+                            gsutil cp gs://atmosly-tfstate-atmosly-439606/harness/test/23/app-debug.apk .
+                            firebase appdistribution:distribute app-debug.apk --app SimpleCalc --groups "Tester"
+                  stepGroupInfra:
+                    type: KubernetesDirect
+                    spec:
+                      connectorRef: test101
+                      namespace: vote
+                      serviceAccountName: vote-ksa
+                      nodeSelector:
+                        cloud.google.com/gke-nodepool: wi-pool
+                      automountServiceAccountToken: true
+            rollbackSteps: []
+          serviceDependencies: []
+        tags: {}
