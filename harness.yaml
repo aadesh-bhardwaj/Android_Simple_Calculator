@@ -109,7 +109,7 @@ pipeline:
                           shell: Sh
                           command: |-
                             apk add curl
-                            curl https://sdk.cloud.google.com | bash
+                            curl https://sdk.cloud.google.com | sh
                             npm install -g firebase-tools
                             gsutil cp gs://atmosly-tfstate-atmosly-439606/harness/test/23/app-debug.apk .
                             firebase appdistribution:distribute app-debug.apk --app SimpleCalc --groups "Tester"
