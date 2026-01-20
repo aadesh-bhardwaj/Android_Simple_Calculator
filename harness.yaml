@@ -108,7 +108,7 @@ pipeline:
                           image: google/cloud-sdk:alpine
                           shell: Sh
                           command: |-
-                            gsutil cp gs://harness-assignment/harness/test/<+pipeline.sequenceId>/app-debug.apk .
+                            gsutil cp gs://harness-assignment/harness/test/43/app-debug.apk .
                             ls
                             pwd
                     - step:
