@@ -108,7 +108,7 @@ pipeline:
                           image: google/cloud-sdk:alpine
                           shell: Sh
                           command: |-
-                            gsutil cp gs://atmosly-tfstate-atmosly-439606/harness/test/23/app-debug.apk .
+                            gsutil cp gs://atmosly-tfstate-atmosly-439606/harness/test/<+pipeline.sequenceId>/app-debug.apk .
                             ls
                             pwd
                     - step:
@@ -123,7 +123,7 @@ pipeline:
                             ls
                             pwd
                             npm install -g firebase-tools
-                            firebase appdistribution:distribute app-debug.apk --app 1:988532166933:android:19fde287f9e0987f83191c --groups "Tester"
+                            firebase appdistribution:distribute app-debug.apk --app 1:188905915500:android:29863b9043cccdee6cc449 --groups "Tester"
                   stepGroupInfra:
                     type: KubernetesDirect
                     spec:
