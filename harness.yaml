@@ -19,7 +19,7 @@ pipeline:
           infrastructure:
             type: KubernetesDirect
             spec:
-              connectorRef: test101
+              connectorRef: test102
               namespace: vote
               automountServiceAccountToken: true
               nodeSelector: {}
@@ -75,8 +75,8 @@ pipeline:
                   name: GCSUpload_1
                   identifier: GCSUpload_1
                   spec:
-                    connectorRef: GCS_Connector
-                    bucket: atmosly-tfstate-atmosly-439606
+                    connectorRef: PersonalGCS_Connector
+                    bucket: harness-assignment
                     sourcePath: Calculator/app/build/outputs/apk/debug/*.apk
                     target: harness/test/<+pipeline.sequenceId>
           caching:
@@ -127,7 +127,7 @@ pipeline:
                   stepGroupInfra:
                     type: KubernetesDirect
                     spec:
-                      connectorRef: test101
+                      connectorRef: test102
                       namespace: vote
                       serviceAccountName: vote-ksa
                       nodeSelector:
