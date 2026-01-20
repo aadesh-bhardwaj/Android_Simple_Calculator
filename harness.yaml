@@ -1,148 +1,140 @@
 pipeline:
-    name: SimpleCalc
-    identifier: SimpleCalc
-    projectIdentifier: default_project
-    orgIdentifier: default
-    properties:
-        ci:
-            codebase:
-                connectorRef: SimpleCalc
-                build: <+input>
-                sparseCheckout: []
-    stages:
-        -
-            stage:
-                name: Build_Android
-                identifier: Build_Android
-                type: CI
-                spec:
-                    cloneCodebase: true
-                    infrastructure:
-                        type: KubernetesDirect
-                        spec:
-                            connectorRef: test101
-                            namespace: harness-delegate-ng
-                            automountServiceAccountToken: true
-                            nodeSelector: {}
-                            os: Linux
-                    execution:
-                        steps:
-                            -
-                                step:
-                                    type: Run
-                                    name: Build APK
-                                    identifier: Build_APK
-                                    spec:
-                                        connectorRef: stupido_saurus
-                                        image: stupidosaurus/android-sdk-gradle:latest
-                                        shell: Sh
-                                        envVariables:
-                                            GRADLE_USER_HOME: /harness/gradle
-                                        command: |-
-                                            set -ex
-                                            echo ">>> Building and Testing Android App..."
-                                            cd Calculator
-                                            chmod +x gradlew
-                                            ./gradlew --version
-                                            ./gradlew clean assembleDebug
-                                            ls -al app/build/outputs/apk/debug/
-                                        resources:
-                                            limits:
-                                                memory: 4Gi
-                                                cpu: "2"
-                            -
-                                step:
-                                    type: RunTests
-                                    name: Run Unit Tests
-                                    identifier: JUnit_Reports
-                                    spec:
-                                        connectorRef: stupido_saurus
-                                        image: stupidosaurus/android-sdk-gradle:latest
-                                        language: Java
-                                        buildTool: Gradle
-                                        args: testDebugUnitTest
-                                        runOnlySelectedTests: false
-                                        preCommand: cd Calculator
-                                        resources:
-                                            limits:
-                                                memory: 4Gi
-                                                cpu: "2"
-                                        reports:
-                                            type: JUnit
-                                            spec:
-                                                paths:
-                                                    - Calculator/app/build/test-results/testDebugUnitTest/*.xml
-                                        enableTestSplitting: false
-                            -
-                                step:
-                                    type: GCSUpload
-                                    name: GCSUpload_1
-                                    identifier: GCSUpload_1
-                                    spec:
-                                        connectorRef: GCS_Connector
-                                        bucket: harness-assignment
-                                        sourcePath: Calculator/app/build/outputs/apk/debug/*.apk
-                                        target: harness/test/<+pipeline.sequenceId>
-                    caching:
-                        enabled: true
+  name: SimpleCalc
+  identifier: SimpleCalc
+  projectIdentifier: default_project
+  orgIdentifier: default
+  properties:
+    ci:
+      codebase:
+        connectorRef: SimpleCalc
+        build: <+input>
+        sparseCheckout: []
+  stages:
+    - stage:
+        name: Build_Android
+        identifier: Build_Android
+        type: CI
+        spec:
+          cloneCodebase: true
+          infrastructure:
+            type: KubernetesDirect
+            spec:
+              connectorRef: test101
+              namespace: harness-delegate-ng
+              automountServiceAccountToken: true
+              nodeSelector: {}
+              os: Linux
+          execution:
+            steps:
+              - step:
+                  type: Run
+                  name: Build APK
+                  identifier: Build_APK
+                  spec:
+                    connectorRef: stupido_saurus
+                    image: stupidosaurus/android-sdk-gradle:latest
+                    shell: Sh
+                    envVariables:
+                      GRADLE_USER_HOME: /harness/gradle
+                    command: |-
+                      set -ex
+                      echo ">>> Building and Testing Android App..."
+                      cd Calculator
+                      chmod +x gradlew
+                      ./gradlew --version
+                      ./gradlew clean assembleDebug
+                      ls -al app/build/outputs/apk/debug/
+                    resources:
+                      limits:
+                        memory: 4Gi
+                        cpu: "2"
+              - step:
+                  type: RunTests
+                  name: Run Unit Tests
+                  identifier: JUnit_Reports
+                  spec:
+                    connectorRef: stupido_saurus
+                    image: stupidosaurus/android-sdk-gradle:latest
+                    language: Java
+                    buildTool: Gradle
+                    args: testDebugUnitTest
+                    runOnlySelectedTests: false
+                    preCommand: cd Calculator
+                    resources:
+                      limits:
+                        memory: 4Gi
+                        cpu: "2"
+                    reports:
+                      type: JUnit
+                      spec:
                         paths:
-                            - /harness/gradle/caches
-                            - /harness/gradle/wrapper
-                    buildIntelligence:
-                        enabled: true
-                description: ""
-        -
-            stage:
-                name: DeployToFirebase
-                identifier: DeployToFirebase
-                description: ""
-                type: Custom
-                spec:
-                    execution:
-                        steps:
-                            -
-                                stepGroup:
-                                    name: DeployToFirebase
-                                    identifier: DeployToFirebase
-                                    steps:
-                                        -
-                                            step:
-                                                type: Run
-                                                name: InstallGSUtil
-                                                identifier: InstallGSUtil
-                                                spec:
-                                                    connectorRef: stupido_saurus
-                                                    image: google/cloud-sdk:alpine
-                                                    shell: Sh
-                                                    command: |-
-                                                        gsutil cp gs://harness-assignment/harness/test/43/app-debug.apk .
-                                                        ls
-                                                        pwd
-                                        -
-                                            step:
-                                                type: Run
-                                                name: DeployFromFirebase
-                                                identifier: DeployFromFirebase
-                                                spec:
-                                                    connectorRef: stupido_saurus
-                                                    image: node:20-alpine
-                                                    shell: Sh
-                                                    command: |-
-                                                        ls
-                                                        pwd
-                                                        npm install -g firebase-tools
-                                                        firebase appdistribution:distribute app-debug.apk --app 1:713633005791:android:5f71723c70b10baf13696a --groups "tester" --token "$FIREBASE_TOKEN" --debug
-                                                    privileged: true
-                                                    envVariables:
-                                                        FIREBASE_TOKEN: 1//0gFygADd3ycdzCgYIARAAGBASNwF-L9Ir8W111ncW2vGEPYgxmVNRlslcdelvD4pQTKMr0imCtxkiYArLhk8UO76hyKH411yC7Lw
-                                    stepGroupInfra:
-                                        type: KubernetesDirect
-                                        spec:
-                                            connectorRef: test101
-                                            namespace: harness-delegate-ng
-                                            serviceAccountName: harness-ksa
-                                            automountServiceAccountToken: true
-                        rollbackSteps: []
-                    serviceDependencies: []
-                tags: {}
-    allowStageExecutions: true
+                          - Calculator/app/build/test-results/testDebugUnitTest/*.xml
+                    enableTestSplitting: false
+              - step:
+                  type: GCSUpload
+                  name: GCSUpload_1
+                  identifier: GCSUpload_1
+                  spec:
+                    connectorRef: GCS_Connector
+                    bucket: harness-assignment
+                    sourcePath: Calculator/app/build/outputs/apk/debug/*.apk
+                    target: harness/test/<+pipeline.sequenceId>
+          caching:
+            enabled: true
+            paths:
+              - /harness/gradle/caches
+              - /harness/gradle/wrapper
+          buildIntelligence:
+            enabled: true
+        description: ""
+    - stage:
+        name: DeployToFirebase
+        identifier: DeployToFirebase
+        description: ""
+        type: Custom
+        spec:
+          execution:
+            steps:
+              - stepGroup:
+                  name: DeployToFirebase
+                  identifier: DeployToFirebase
+                  steps:
+                    - step:
+                        type: Run
+                        name: InstallGSUtil
+                        identifier: InstallGSUtil
+                        spec:
+                          connectorRef: stupido_saurus
+                          image: google/cloud-sdk:alpine
+                          shell: Sh
+                          command: |-
+                            gsutil cp gs://harness-assignment/harness/test/43/app-debug.apk .
+                            ls
+                            pwd
+                    - step:
+                        type: Run
+                        name: DeployFromFirebase
+                        identifier: DeployFromFirebase
+                        spec:
+                          connectorRef: stupido_saurus
+                          image: node:20-alpine
+                          shell: Sh
+                          command: |-
+                            ls
+                            pwd
+                            npm install -g firebase-tools
+                            firebase appdistribution:distribute app-debug.apk --app 1:713633005791:android:5f71723c70b10baf13696a --groups "tester" --token "$FIREBASE_TOKEN" --debug
+                          privileged: true
+                          envVariables:
+                            FIREBASE_TOKEN: <+secrets.getValue("firebase_ci_token")>
+                  stepGroupInfra:
+                    type: KubernetesDirect
+                    spec:
+                      connectorRef: test101
+                      namespace: harness-delegate-ng
+                      serviceAccountName: harness-ksa
+                      automountServiceAccountToken: true
+            rollbackSteps: []
+          serviceDependencies: []
+        tags: {}
+  allowStageExecutions: true
