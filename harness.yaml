@@ -117,13 +117,28 @@ pipeline:
                         identifier: DeployFromFirebase
                         spec:
                           connectorRef: stupido_saurus
-                          image: node:20-alpine
+                          image: google/cloud-sdk:alpine
                           shell: Sh
                           command: |-
-                            ls
-                            pwd
+                            set -ex
+
+                            # Install Node + Firebase CLI
+                            apk add --no-cache nodejs npm
+
                             npm install -g firebase-tools
-                            firebase appdistribution:distribute app-debug.apk --app 1:713633005791:android:5f71723c70b10baf13696a --groups "tester" --debug
+
+                            # HARD CHECK: Metadata must work
+                            curl -H "Metadata-Flavor: Google" \
+                              http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/email
+
+                            # HARD CHECK: ADC must mint token
+                            gcloud auth application-default print-access-token > /dev/null
+
+                            # Deploy
+                            firebase appdistribution:distribute app-debug.apk \
+                              --app 1:713633005791:android:5f71723c70b10baf13696a \
+                              --groups "tester" \
+                              --debug
                   stepGroupInfra:
                     type: KubernetesDirect
                     spec:
