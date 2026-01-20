@@ -126,7 +126,7 @@ pipeline:
                             firebase appdistribution:distribute app-debug.apk --app 1:713633005791:android:5f71723c70b10baf13696a --groups "tester" --token "$FIREBASE_TOKEN" --debug
                           privileged: true
                           envVariables:
-                            FIREBASE_TOKEN: <+secrets.getValue("firebase_ci_token")>
+                            FIREBASE_TOKEN: <+secrets.getValue("firebase_token")>
                   stepGroupInfra:
                     type: KubernetesDirect
                     spec:
