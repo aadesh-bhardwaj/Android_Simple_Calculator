@@ -20,7 +20,7 @@ pipeline:
             type: KubernetesDirect
             spec:
               connectorRef: test101
-              namespace: imported
+              namespace: vote
               automountServiceAccountToken: true
               nodeSelector: {}
               os: Linux
