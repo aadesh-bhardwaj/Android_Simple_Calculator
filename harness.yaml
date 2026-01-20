@@ -136,3 +136,4 @@ pipeline:
             rollbackSteps: []
           serviceDependencies: []
         tags: {}
+  allowStageExecutions: true
