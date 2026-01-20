@@ -19,7 +19,7 @@ pipeline:
           infrastructure:
             type: KubernetesDirect
             spec:
-              connectorRef: test102
+              connectorRef: test101
               namespace: harness-delegate-ng
               automountServiceAccountToken: true
               nodeSelector: {}
