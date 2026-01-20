@@ -129,7 +129,7 @@ pipeline:
                     spec:
                       connectorRef: test101
                       namespace: harness-delegate-ng
-                      serviceAccountName: vote-ksa
+                      serviceAccountName: harness-ksa
                       nodeSelector:
                         cloud.google.com/gke-nodepool: wi-pool
                       automountServiceAccountToken: true
