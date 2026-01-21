@@ -59,7 +59,7 @@ pipeline:
                     buildTool: Gradle
                     args: testDebugUnitTest
                     runOnlySelectedTests: false
-                    preCommand: ls
+                    preCommand: cd Calculator
                     resources:
                       limits:
                         memory: 4Gi
