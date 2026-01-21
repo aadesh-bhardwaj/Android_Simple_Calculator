@@ -69,7 +69,6 @@ pipeline:
                       spec:
                         paths:
                           - Calculator/app/build/test-results/testDebugUnitTest/*.xml
-                    enableTestSplitting: false
               - step:
                   type: GCSUpload
                   name: GCSUpload_1
