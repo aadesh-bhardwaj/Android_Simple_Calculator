@@ -7,9 +7,9 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;   // 👈 updated
 /*
- *  Author: Mahak Aggarwal
+ *  Author: Aadesh Bhardwaj
  *  Last date modified: 26-09-2018
- *  (C), All rights reserved, Mahak Aggarwal 2018
+ *  (C), All rights reserved, Aadesh Bhardwaj 2018
  *
  *  App Icon -
  *  credits to Font Awesome and MDBootstrap for the application logo

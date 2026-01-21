@@ -1,7 +1,7 @@
 # Simple Calculator Android Application
 
 # Author
-Mahak Aggarwal
+Aadesh Bhardwaj
 
 # Features
 The application provides basic calculation functionality – addition, subtraction, multiplication, division, modulus, power, and square root in addition to providing buttons for numbers, decimal point, ‘Clear’, and backspace.
